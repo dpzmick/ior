@@ -1814,7 +1814,12 @@ static IOR_offset_t WriteOrRead(IOR_param_t *test, int rep, IOR_results_t *resul
           srand(seed + pretendRank);
           srand64(((uint64_t) seed) * (pretendRank + 1));
         }else if (test->randomOffset == 3){
-          test->random_range = u_lfsr_range_init(test->fileSizeForRead / test->blockSize, pretendRank + 1);
+          /* Seed the permutation from the run's seed (time-based unless
+             --random-offset-seed is given) and the task, so the order differs
+             between runs but each task still gets its own order. */
+          uint64_t seed = (uint32_t) init_random_seed(test, pretendRank);
+          test->random_range = u_lfsr_range_init(test->fileSizeForRead / test->blockSize,
+                                                 (seed << 32) | (uint32_t) (pretendRank + 1));
         }
 
         void * randomPrefillBuffer = NULL;
