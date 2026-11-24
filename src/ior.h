@@ -156,7 +156,7 @@ typedef struct
     int id;                          /* test's unique ID */
     int intraTestBarriers;           /* barriers between open/op and op/close */
     int warningAsErrors;             /* treat any warning as an error */
-    LFSRRange * random_range;        /* If LFSR is used */
+    PermRange * random_range;        /* permutation for -z -z -z */
     aiori_xfer_hint_t hints;
 } IOR_param_t;
 

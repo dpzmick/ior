@@ -1814,7 +1814,12 @@ static IOR_offset_t WriteOrRead(IOR_param_t *test, int rep, IOR_results_t *resul
           srand(seed + pretendRank);
           srand64(((uint64_t) seed) * (pretendRank + 1));
         }else if (test->randomOffset == 3){
-          test->random_range = u_lfsr_range_init(test->fileSizeForRead / test->blockSize, pretendRank + 1);
+          /* The run's seed (time-based unless --random-offset-seed is given)
+             changes the order between runs; the task gives each task its own
+             order, as the seed is the same for all tasks of a shared file. */
+          uint64_t seed = (uint32_t) init_random_seed(test, pretendRank);
+          test->random_range = u_perm_range_init(test->fileSizeForRead / test->blockSize,
+                                                 (seed << 32) | (uint32_t) (pretendRank + 1));
         }
 
         void * randomPrefillBuffer = NULL;
@@ -1889,7 +1894,7 @@ static IOR_offset_t WriteOrRead(IOR_param_t *test, int rep, IOR_results_t *resul
               }else if (test->randomOffset == 2){
                 offset += test->transferSize;
               }else if (test->randomOffset == 3){
-                offset = u_lfsr_range_step (test->random_range) * test->blockSize;
+                offset = u_perm_range_step(test->random_range) * test->blockSize;
               }else{
                 offset = j * test->transferSize;
                 if (test->filePerProc) {
@@ -1963,7 +1968,7 @@ static IOR_offset_t WriteOrRead(IOR_param_t *test, int rep, IOR_results_t *resul
                 }else if (test->randomOffset == 2){
                   offset += test->transferSize;
                 }else if (test->randomOffset == 3){
-                  offset = u_lfsr_range_step (test->random_range) * test->blockSize;
+                  offset = u_perm_range_step(test->random_range) * test->blockSize;
                 }else{
                   offset = j * test->transferSize;
                   if (test->filePerProc) {
@@ -1992,7 +1997,7 @@ static IOR_offset_t WriteOrRead(IOR_param_t *test, int rep, IOR_results_t *resul
           aligned_buffer_free(randomPrefillBuffer, test->gpuMemoryFlags);
         }
         if(test->random_range){
-          u_lfsr_range_free(test->random_range);
+          u_perm_range_free(test->random_range);
           test->random_range = NULL;
         }
 
